@@ -1,2 +1,2 @@
 def readflie(filename):
-    fliepath = './'
+    fliepath = './CPA'
