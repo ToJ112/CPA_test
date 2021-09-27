@@ -1,0 +1,2 @@
+def readflie(filename):
+    fliepath = './'
