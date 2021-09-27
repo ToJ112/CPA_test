@@ -15,13 +15,17 @@ def readfile(pathname, n=100):  # pathname为具体文件夹名，n为波形条�
 
     plaintext_data = pd.read_csv(filepath + '/Plaintext.csv', header=None)
     plaintext = plaintext_data[(plaintext_data.index + 2) % 4 == 0]
+    plaintext = plaintext[0].str.split()
     pt_list = plaintext.values.tolist()
-    plaintext.to_csv('plaintext_raw.csv',index=False,header=False)
+    #plaintext.to_csv('plaintext_raw.csv',index=False,header=False)
+
 
     trace = []
     for i in range(n):
         trace_data = pd.read_csv(filepath+'/Trace000'+num2str(i)+'.csv', header=None)
-        trace.append(trace_data[0].values.tolist())
+        trace.append(trace_data[1].values.tolist())
+
+    return pt_list,trace
 
 
 if __name__ == '__main__':
