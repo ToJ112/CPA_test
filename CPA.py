@@ -1,8 +1,8 @@
 from openpyxl import load_workbook
 import numpy as np
 import binascii
-
-
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 aes_sbox = np.array([
     [0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76],
     [0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0],
@@ -53,10 +53,9 @@ if __name__ == "__main__":
             key = i
             # 选取第n个密文 ⭐
             d = plaintext.cell(j + 1, 16).value
-            print(d)
             d = int.from_bytes(char_to_hex(d), byteorder='big', signed=False)
-            print(key, d)
             temp = key ^ d
+            print(temp)
             # 计算汉明重量
             hamingw_np[j][i] = bin(sbox_out(temp)).count('1')
     # print(hamingw_np)
@@ -69,14 +68,21 @@ if __name__ == "__main__":
 
     # 计算相关系数
     r_np = np.zeros((256, 8500))
-    for i in range(256):
-        print("第" + str(i) + "轮...")
-        for j in range(8500):
-            hmtest = hamingw_np[:, i]
-            trtest = trace_np[:, j]
-            test = np.corrcoef(hmtest, trtest)
-            r_np[i][j] = test[0][1]
-    # 保存np ⭐
-    np.save("cpatest16.npy", r_np)
-    print(r_np)
-    np.save("cpa3.npy", r_np)
+    # for i in range(256):
+    #     print("第" + str(i) + "轮...")
+    #     for j in range(8500):
+    #         hmtest = hamingw_np[:, i]
+    #         trtest = trace_np[:, j]
+    #         test = np.corrcoef(hmtest, trtest)
+    #         r_np[i][j] = test[0][1]
+    # # 保存np ⭐
+    # np.save("cpatest16.npy", r_np)
+    # print(r_np)
+    # # np.save("cpa3.npy", r_np)
+    # for i in tqdm(range(256)):
+    #     X = np.linspace(0, 8500, 8500)
+    #     Y = r_np[i]
+    #     plt.plot(X, Y, ls="-", lw=2, label="correlation")
+    #     plt.ylim(-1, 1)  # 设置y轴取值范围
+    #     plt.savefig("%d.png" %(i), bbox_inches='tight')
+    #     plt.clf()  # 清除生成图避免重叠

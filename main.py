@@ -1,7 +1,7 @@
 import DataPre
 import numpy as np
-import binascii
-
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 aes_sbox = np.array([
     [0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76],
@@ -28,20 +28,47 @@ def sbox_trans(input):
     n = input % 16
     return aes_sbox[m][n]
 
+def corr_cal(k, plaintexts, trace,N = 100):
+    hamWeight = np.zeros((256, N))
+    for key in range(256):
+        for tra in range(N):
+            # for p in range(16):
+            plaintext = eval('0x' + plaintexts[tra][k])
+            ciphertext = key ^ plaintext
+            # hamWeight[key][tra] += bin(sbox_trans(ciphertext)).count('1')
+            hamWeight[key][tra] = bin(sbox_trans(ciphertext)).count('1')
+
+    # 根据轨迹寻找泄漏点及密钥
+    trace = np.array(trace)
+    corr_key2trace = np.zeros((256, 8500))
+
+    for i in tqdm(range(256)):
+        for j in range(8500):
+            hmWei = hamWeight[i, :]
+            tra = trace[:, j]
+            corr_key2trace[i][j] = np.corrcoef(hmWei, tra)[0][1]
+    np.savetxt("new.csv",corr_key2trace, delimiter=',')
+    for i in tqdm(range(256)):
+        X = np.linspace(0, 8500, 8500)
+        Y = corr_key2trace[i]
+        plt.plot(X, Y, ls="-", lw=2, label="correlation")
+        plt.ylim(-1, 1)  # 设置y轴取值范围
+        plt.savefig("%s/%d.png" %(k,i), bbox_inches='tight')
+        plt.clf()  # 清除生成图避免重叠
+
 # def hmWeight(plaintext):
 
 
-
 if __name__ == '__main__':
-    N = 100
-    plaintexts,trace = DataPre.readfile('相关能量分析_原始波_无滤波_100条_8500点',N)
-    hmWeight = np.zeros((N, 256))
-    print(eval('0x'+plaintexts[0][0]))
-    print(sbox_trans(eval('0x'+plaintexts[0][0])))
-    hamWeight=np.zeros((256,N))
-    for key in range(256):
-        for tra in range(N):
-            for p in range(16):
-                plaintext = eval('0x'+plaintexts[tra][p])
-                ciphertext = key ^ sbox_trans(plaintext)
-                hamWeight[key][tra] += bin(sbox_trans(ciphertext)).count('1')
+    N = 100  # 100条能量迹（根据提供文件）
+    plaintexts, trace = DataPre.readfile('相关能量分析_原始波_无滤波_100条_8500点', N)
+    # print(eval('0x'+plaintexts[0][0]))
+    # print(sbox_trans(eval('0x'+plaintexts[0][0])))
+
+    for bit in range(16):
+        print("第"+str(bit)+"字节")
+        corr_cal(bit,plaintexts, trace,N)
+    # np.savetxt("hammingWeight.csv", hamWeight, delimiter=',')
+    # corr_cal(15,plaintexts, trace,N)
+
+

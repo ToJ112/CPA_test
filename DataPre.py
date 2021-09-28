@@ -1,5 +1,5 @@
 import pandas as pd
-
+import os
 
 def num2str(num):
     if num < 9:
@@ -26,6 +26,7 @@ def readfile(pathname, n=100):  # pathname为具体文件夹名，n为波形条�
         trace.append(trace_data[1].values.tolist())
 
     return pt_list,trace
+
 
 
 if __name__ == '__main__':
