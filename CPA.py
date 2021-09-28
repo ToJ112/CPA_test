@@ -79,4 +79,4 @@ if __name__ == "__main__":
     # 保存np ⭐
     np.save("cpatest16.npy", r_np)
     print(r_np)
-    # np.save("cpa3.npy", r_np)
+    np.save("cpa3.npy", r_np)
