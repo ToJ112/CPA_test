@@ -1,4 +1,4 @@
-import DataPre
+from openpyxl import load_workbook
 import numpy as np
 import binascii
 
@@ -23,25 +23,60 @@ aes_sbox = np.array([
 ])
 
 
-def sbox_trans(input):
-    m = input // 16
-    n = input % 16
-    return aes_sbox[m][n]
-
-# def hmWeight(plaintext):
-
+def sbox_out(input):
+    x = input // 16
+    y = input % 16
+    output = aes_sbox[x][y]
+    return int(output)
 
 
-if __name__ == '__main__':
-    N = 100
-    plaintexts,trace = DataPre.readfile('相关能量分析_原始波_无滤波_100条_8500点',N)
-    hmWeight = np.zeros((N, 256))
-    print(eval('0x'+plaintexts[0][0]))
-    print(sbox_trans(eval('0x'+plaintexts[0][0])))
-    hamWeight=np.zeros((256,N))
-    for key in range(256):
-        for tra in range(N):
-            for p in range(16):
-                plaintext = eval('0x'+plaintexts[tra][p])
-                ciphertext = key ^ sbox_trans(plaintext)
-                hamWeight[key][tra] += bin(sbox_trans(ciphertext)).count('1')
+def load_data(filename):
+    wb = load_workbook(filename)
+    sheets = wb.worksheets
+    return sheets[0]
+
+
+def char_to_hex(data):
+    output = binascii.unhexlify(data)
+    return output
+
+
+if __name__ == "__main__":
+    plaintext = load_data("plaintext2.xlsx")
+    trace = load_data("trace.xlsx")
+
+    hamingw_np = np.zeros((100, 256))
+    # 假设中间值
+    count = 0
+    for i in range(256):
+        for j in range(100):
+            key = i
+            # 选取第n个密文 ⭐
+            d = plaintext.cell(j + 1, 16).value
+            print(d)
+            d = int.from_bytes(char_to_hex(d), byteorder='big', signed=False)
+            print(key, d)
+            temp = key ^ d
+            # 计算汉明重量
+            hamingw_np[j][i] = bin(sbox_out(temp)).count('1')
+    # print(hamingw_np)
+    # 读取能量轨迹
+    trace_np = np.zeros((100, 8500))
+    for i in range(8500):
+        for j in range(100):
+            temp = trace.cell(i + 1, j + 1).value
+            trace_np[j][i] = temp
+
+    # 计算相关系数
+    r_np = np.zeros((256, 8500))
+    for i in range(256):
+        print("第" + str(i) + "轮...")
+        for j in range(8500):
+            hmtest = hamingw_np[:, i]
+            trtest = trace_np[:, j]
+            test = np.corrcoef(hmtest, trtest)
+            r_np[i][j] = test[0][1]
+    # 保存np ⭐
+    np.save("cpatest16.npy", r_np)
+    print(r_np)
+    # np.save("cpa3.npy", r_np)
