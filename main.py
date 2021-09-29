@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# author: jtning
+
 import DataPre
 import numpy as np
 from tqdm import tqdm
@@ -37,20 +40,6 @@ def corr_paint_all(corr_key2trace,k):
         plt.savefig("%s/%d.png" % (k, i), bbox_inches='tight')
         plt.clf()  # 清除生成图避免重叠
 
-def corr_paint_key(corr_key2trace,k, cipher):
-
-    for i in tqdm(range(256)):
-        X = np.linspace(0, 8500, 8500)
-        npmax = np.max(corr_key2trace[i])
-        npmin = np.min(corr_key2trace[i])
-        # print(npmin,npmax)
-        if (npmax > 0.5 or npmin < - 0.5 ):
-            cipher += hex(i)
-            Y = corr_key2trace[i]
-            plt.plot(X, Y, ls="-", lw=2, label="correlation")
-            plt.ylim(-1, 1)  # 设置y轴取值范围
-            plt.savefig("%s_%d.png" % (k, i), bbox_inches='tight')
-    print("当前已解析密钥为"+cipher)
 
 def corr_cal(k, plaintexts, trace, N=100):
     hamWeight = np.zeros((256, N))
@@ -72,16 +61,21 @@ def corr_cal(k, plaintexts, trace, N=100):
             tra = trace[:, j]
             corr_key2trace[i][j] = np.corrcoef(hmWei, tra)[0][1]
 
-    cipher = ""
-    corr_paint_key(corr_key2trace, k)
+    cipher_key = np.argmax(np.max(corr_key2trace, axis=1))
+    print(hex(cipher_key))
+    #输出时cut掉前两位的0x
+    return hex(cipher_key)[-2:]
+
 
 
 
 if __name__ == '__main__':
     N = 100  # 100条能量迹（根据提供文件）
     plaintexts, trace = DataPre.readfile('相关能量分析_原始波_无滤波_100条_8500点', N)
-
+    cipher = []
     for bit in range(16):
         print("第" + str(bit) + "字节")
-        corr_cal(bit, plaintexts, trace, N)
-
+        this_cipher = corr_cal(bit, plaintexts, trace, N)
+        cipher.append(this_cipher)
+    print(cipher)
+    #['11', '22', '33', '44', '55', '66', '77', '88', '99', 'aa', 'bb', 'cc', 'dd', 'ee', 'ff', 'de']
