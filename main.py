@@ -47,7 +47,10 @@ def corr_cal(k, plaintexts, trace,N = 100):
             hmWei = hamWeight[i, :]
             tra = trace[:, j]
             corr_key2trace[i][j] = np.corrcoef(hmWei, tra)[0][1]
-    np.savetxt("new.csv",corr_key2trace, delimiter=',')
+
+
+
+def corr_paint(corr_key2trace):
     for i in tqdm(range(256)):
         X = np.linspace(0, 8500, 8500)
         Y = corr_key2trace[i]
@@ -55,9 +58,6 @@ def corr_cal(k, plaintexts, trace,N = 100):
         plt.ylim(-1, 1)  # 设置y轴取值范围
         plt.savefig("%s/%d.png" %(k,i), bbox_inches='tight')
         plt.clf()  # 清除生成图避免重叠
-
-# def hmWeight(plaintext):
-
 
 if __name__ == '__main__':
     N = 100  # 100条能量迹（根据提供文件）
