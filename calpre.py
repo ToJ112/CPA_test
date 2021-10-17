@@ -49,9 +49,27 @@ def corr_cal_after_sbox(k, plaintexts, trace, N=100):
     # 根据轨迹寻找泄漏点及密钥
     trace_matrix = np.array(trace)
     corr_key2trace = np.zeros((256, 8500))
-
     for i in tqdm(range(256)):
         for j in range(8500):
+            hmWei = hamWeight[i, :]
+            tra = trace_matrix[:, j]
+            corr_key2trace[i][j] = np.corrcoef(hmWei, tra)[0][1]
+    corr_abs = abs(corr_key2trace)
+    cipher_key = np.argmax(np.max(corr_abs, axis=1))
+    return '{0:02X}'.format(cipher_key)
+
+
+def corr_cal_max_extract(k, plaintexts, trace_matrix, ipc, N=100):
+    hamWeight = np.zeros((256, N))
+    for key in range(256):
+        for tra in range(N):
+            plaintext = eval('0x' + plaintexts[tra][k])
+            ciphertext = key ^ plaintext
+            hamWeight[key][tra] = bin(sbox_trans(ciphertext)).count('1')
+    # 根据轨迹寻找泄漏点及密钥
+    corr_key2trace = np.zeros((256, ipc))
+    for i in tqdm(range(256)):
+        for j in range(ipc):
             hmWei = hamWeight[i, :]
             tra = trace_matrix[:, j]
             corr_key2trace[i][j] = np.corrcoef(hmWei, tra)[0][1]
@@ -68,7 +86,6 @@ def corr_cal_before_sbox(k, plaintexts, trace, N=100):
             ciphertext = key ^ plaintext
             hamWeight[key][tra] = bin(ciphertext).count('1')  # S盒之前
 
-    trace = np.array(trace)
     corr_key2trace = np.zeros((256, 8500))
 
     for i in tqdm(range(256)):
