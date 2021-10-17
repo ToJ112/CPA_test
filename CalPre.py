@@ -27,7 +27,8 @@ def sbox_trans(input):
     n = input % 16
     return aes_sbox[m][n]
 
-def corr_paint_all(corr_key2trace,k):
+
+def corr_paint_all(corr_key2trace, k):
     for i in tqdm(range(256)):
         X = np.linspace(0, 8500, 8500)
         Y = corr_key2trace[i]
@@ -41,38 +42,31 @@ def corr_cal_after_sbox(k, plaintexts, trace, N=100):
     hamWeight = np.zeros((256, N))
     for key in range(256):
         for tra in range(N):
-            # for p in range(16):
             plaintext = eval('0x' + plaintexts[tra][k])
             ciphertext = key ^ plaintext
-            # hamWeight[key][tra] += bin(sbox_trans(ciphertext)).count('1')
             hamWeight[key][tra] = bin(sbox_trans(ciphertext)).count('1')
 
     # 根据轨迹寻找泄漏点及密钥
-    trace = np.array(trace)
+    trace_matrix = np.array(trace)
     corr_key2trace = np.zeros((256, 8500))
 
     for i in tqdm(range(256)):
         for j in range(8500):
             hmWei = hamWeight[i, :]
-            tra = trace[:, j]
+            tra = trace_matrix[:, j]
             corr_key2trace[i][j] = np.corrcoef(hmWei, tra)[0][1]
-
-    cipher_key = np.argmax(np.max(corr_key2trace, axis=1))
-    print(hex(cipher_key))
-    #输出时cut掉前两位的0x
-    return hex(cipher_key)[-2:]
+    corr_abs = abs(corr_key2trace)
+    cipher_key = np.argmax(np.max(corr_abs, axis=1))
+    return '{0:02X}'.format(cipher_key)
 
 
 def corr_cal_before_sbox(k, plaintexts, trace, N=100):
     hamWeight = np.zeros((256, N))
     for key in range(256):
         for tra in range(N):
-            # for p in range(16):
             plaintext = eval('0x' + plaintexts[tra][k])
             ciphertext = key ^ plaintext
-            # hamWeight[key][tra] += bin(sbox_trans(ciphertext)).count('1')
-            # hamWeight[key][tra] = bin(sbox_trans(ciphertext)).count('1')
-            hamWeight[key][tra] = bin(ciphertext).count('1') #S盒之前
+            hamWeight[key][tra] = bin(ciphertext).count('1')  # S盒之前
 
     trace = np.array(trace)
     corr_key2trace = np.zeros((256, 8500))
