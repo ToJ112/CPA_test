@@ -32,10 +32,22 @@ def max_traces(traces, ipc, N=100):
     return np.vstack([traces[i, tuple(trace_maxs[i])] for i in range(traces.shape[0])])
 
 
-def original_consolidation(traces, slices):
-    for i in range(slices):
-        np
+def original_consolidation(traces, intervals, N):
+    slices = int(8500 / intervals)
+    traces_slice = np.reshape(traces, (N, intervals, slices))
+    print(traces_slice)
+    # traces_slice = [] *slices
+    # for i in range(slices):
+    #
+    #     traces_slice[i] = traces[:, i * intervals:(i + 1) * intervals]
+
+
 if __name__ == '__main__':
     pt_list, trace = readfile('相关能量分析_原始波_无滤波_100条_8500点')
-
+    original_consolidation(trace, 100, 100)
     # np.savetxt("trace_max_list.csv",max_traces(trace, 160), delimiter=',', fmt="%.4f")
+    a = np.array([[0, 1, 2, 3],
+                  [4, 5, 6, 7],
+                  [8, 9, 10, 11]])
+    b = np.reshape(a, (3, 2, 2))
+    print(b)
