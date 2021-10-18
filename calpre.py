@@ -38,6 +38,44 @@ def corr_paint_all(corr_key2trace, k):
         plt.clf()  # 清除生成图避免重叠
 
 
+def corr_cal_before_sbox(k, plaintexts, trace, N=100):
+    hamWeight = np.zeros((256, N))
+    for key in range(256):
+        for tra in range(N):
+            plaintext = eval('0x' + plaintexts[tra][k])
+            ciphertext = key ^ plaintext
+            hamWeight[key][tra] = bin(ciphertext).count('1')  # S盒之前
+
+    corr_key2trace = np.zeros((256, 8500))
+
+    for i in tqdm(range(256)):
+        for j in range(8500):
+            hmWei = hamWeight[i, :]
+            tra = trace[:, j]
+            corr_key2trace[i][j] = np.corrcoef(hmWei, tra)[0][1]
+    return corr_key2trace
+
+
+def cipher_cal_before_sbox(k, plaintexts, trace, N=100):
+    hamWeight = np.zeros((256, N))
+    for key in range(256):
+        for tra in range(N):
+            plaintext = eval('0x' + plaintexts[tra][k])
+            ciphertext = key ^ plaintext
+            hamWeight[key][tra] = bin(ciphertext).count('1')  # S盒之前
+
+    corr_key2trace = np.zeros((256, 8500))
+
+    for i in tqdm(range(256)):
+        for j in range(8500):
+            hmWei = hamWeight[i, :]
+            tra = trace[:, j]
+            corr_key2trace[i][j] = np.corrcoef(hmWei, tra)[0][1]
+    corr_abs = abs(corr_key2trace)
+    cipher_key = np.argmax(np.max(corr_abs, axis=1))
+    return '{0:02X}'.format(cipher_key)
+
+
 def corr_cal_after_sbox(k, plaintexts, trace, N=100):
     hamWeight = np.zeros((256, N))
     for key in range(256):
@@ -59,7 +97,7 @@ def corr_cal_after_sbox(k, plaintexts, trace, N=100):
     return '{0:02X}'.format(cipher_key)
 
 
-def corr_cal_max_extract(k, plaintexts, trace_matrix, ipc, N=100):
+def corr_cal_extract(k, plaintexts, trace_matrix, ipc, N=100):
     hamWeight = np.zeros((256, N))
     for key in range(256):
         for tra in range(N):
@@ -76,21 +114,3 @@ def corr_cal_max_extract(k, plaintexts, trace_matrix, ipc, N=100):
     corr_abs = abs(corr_key2trace)
     cipher_key = np.argmax(np.max(corr_abs, axis=1))
     return '{0:02X}'.format(cipher_key)
-
-
-def corr_cal_before_sbox(k, plaintexts, trace, N=100):
-    hamWeight = np.zeros((256, N))
-    for key in range(256):
-        for tra in range(N):
-            plaintext = eval('0x' + plaintexts[tra][k])
-            ciphertext = key ^ plaintext
-            hamWeight[key][tra] = bin(ciphertext).count('1')  # S盒之前
-
-    corr_key2trace = np.zeros((256, 8500))
-
-    for i in tqdm(range(256)):
-        for j in range(8500):
-            hmWei = hamWeight[i, :]
-            tra = trace[:, j]
-            corr_key2trace[i][j] = np.corrcoef(hmWei, tra)[0][1]
-    return corr_key2trace
