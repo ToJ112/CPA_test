@@ -28,6 +28,16 @@ def sbox_trans(input):
     return aes_sbox[m][n]
 
 
+def hamming_weight(k, plaintexts, N):
+    hamWeight = np.zeros((256, N))
+    for key in range(256):
+        for tra in range(N):
+            plaintext = eval('0x' + plaintexts[tra][k])
+            ciphertext = key ^ plaintext
+            hamWeight[key][tra] = bin(sbox_trans(ciphertext)).count('1')
+    return hamWeight
+
+
 def corr_paint_all(corr_key2trace, k):
     for i in tqdm(range(256)):
         X = np.linspace(0, 8500, 8500)
@@ -77,12 +87,7 @@ def cipher_cal_before_sbox(k, plaintexts, trace, N=100):
 
 
 def corr_cal_after_sbox(k, plaintexts, trace, N=100):
-    hamWeight = np.zeros((256, N))
-    for key in range(256):
-        for tra in range(N):
-            plaintext = eval('0x' + plaintexts[tra][k])
-            ciphertext = key ^ plaintext
-            hamWeight[key][tra] = bin(sbox_trans(ciphertext)).count('1')
+    hamWeight = hamming_weight(k, plaintexts, N)
 
     # 根据轨迹寻找泄漏点及密钥
     trace_matrix = np.array(trace)
@@ -98,12 +103,7 @@ def corr_cal_after_sbox(k, plaintexts, trace, N=100):
 
 
 def corr_cal_extract(k, plaintexts, trace_matrix, ipc, N=100):
-    hamWeight = np.zeros((256, N))
-    for key in range(256):
-        for tra in range(N):
-            plaintext = eval('0x' + plaintexts[tra][k])
-            ciphertext = key ^ plaintext
-            hamWeight[key][tra] = bin(sbox_trans(ciphertext)).count('1')
+    hamWeight = hamming_weight(k, plaintexts, N)
     # 根据轨迹寻找泄漏点及密钥
     corr_key2trace = np.zeros((256, ipc))
     for i in tqdm(range(256)):
@@ -114,3 +114,29 @@ def corr_cal_extract(k, plaintexts, trace_matrix, ipc, N=100):
     corr_abs = abs(corr_key2trace)
     cipher_key = np.argmax(np.max(corr_abs, axis=1))
     return '{0:02X}'.format(cipher_key)
+
+
+def corr_cal_dpa(k, plaintexts, traces, N):
+    trace0 = []
+    trace1 = []
+    count0 = 0
+    count1 = 0
+    max_diff = -1
+    real_key = -1
+    for key in range(256):
+        for tra in range(N):
+            plaintext = eval('0x' + plaintexts[tra][k])
+            ciphertext = sbox_trans(key ^ plaintext)
+            if (ciphertext & 1):
+                trace1.append(tra)
+            else:
+                trace0.append(tra)
+        print(np.shape(trace0),np.shape(trace1))
+        mean_tra0 = np.einsum("ij->j", np.array(trace0)) / np.double(np.shape(trace0)[0])
+        mean_tra1 = np.einsum("ij->j", np.array(trace1)) / np.double(np.shape(trace1)[0])
+        diff_trace = abs(mean_tra0 - mean_tra1)
+        print(diff_trace)
+        # if max_diff < diff_trace:
+        #     max_diff = diff_trace
+        #     real_key = key
+    return real_key

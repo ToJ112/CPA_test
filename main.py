@@ -15,21 +15,21 @@ def before_sbox(plaintexts, trace, N=100):
         calpre.corr_paint_all(corr_arr, bit)
 
 
-def after_sbox_test1(plaintexts, trace, N=100):
-    cipher = []
-    for bit in range(16):
-        print("第" + str(bit + 1) + "字节")
-        this_cipher = calpre.corr_cal_after_sbox(bit, plaintexts, trace, N)
-        cipher.append(this_cipher)
-        print(this_cipher)
-    return cipher
-
-
 def before_sbox_test1(plaintexts, trace, N=100):
     cipher = []
     for bit in range(16):
         print("第" + str(bit + 1) + "字节")
         this_cipher = calpre.cipher_cal_before_sbox(bit, plaintexts, trace, N)
+        cipher.append(this_cipher)
+        print(this_cipher)
+    return cipher
+
+
+def after_sbox_cpa(plaintexts, trace, N=100):
+    cipher = []
+    for bit in range(16):
+        print("第" + str(bit + 1) + "字节")
+        this_cipher = calpre.corr_cal_after_sbox(bit, plaintexts, trace, N)
         cipher.append(this_cipher)
         print(this_cipher)
     return cipher
@@ -48,13 +48,13 @@ def after_sbox_max_extract(plaintexts, trace, ipc, N=100):
 def after_sbox_consolidation(plaintexts, trace, intervals, method, N=100):
     cipher = []
     trace_consolidation = datapre.consolidation(trace, intervals, method)
-    print(trace_consolidation)
     slices = int(8500 / intervals)
     for bit in range(16):
         print("第" + str(bit + 1) + "字节")
         this_cipher = calpre.corr_cal_extract(bit, plaintexts, trace_consolidation, slices, N)
         cipher.append(this_cipher)
         print(this_cipher)
+    print(cipher)
     return cipher
 
 
@@ -65,11 +65,12 @@ if __name__ == '__main__':
     intervals = 340  # 整合的时间段中的点数
     plaintexts, trace = datapre.readfile('相关能量分析_原始波_无滤波_%s条_8500点' % N, N)
     trace_max_extract = datapre.max_traces(trace, ipc, N)
+    calpre.corr_cal_dpa(0, plaintexts, trace, N)
     print("数据成功载入...")
-    # vv = before_sbox_test1(plaintexts, trace, N)
-    # cipher = corr_cal_extract(plaintexts, trace_max_extract, ipc, N)
-    cipher_extract = after_sbox_consolidation(plaintexts, trace, intervals, 'pow', N)
+    # cipher_before_sbox = before_sbox_test1(plaintexts, trace, N)
+    # cipher_after_sbox = after_sbox_cpa(plaintexts, trace_max_extract, N)
+    # cipher_extract = after_sbox_consolidation(plaintexts, trace, intervals, 'pow', N)
     time_end = time.time()
     print(time_end - time_start)
-    print(cipher_extract)
+
     # ['11', '22', '33', '44', '55', '66', '77', '88', '99', 'aa', 'bb', 'cc', 'dd', 'ee', 'ff', '00']
