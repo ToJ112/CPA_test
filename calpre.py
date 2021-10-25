@@ -130,9 +130,14 @@ def corr_cal_dpa(k, plaintexts, traces, N, method):
             if method == 'afterSbox_LSB':
                 method_judge = (sbox_trans(key ^ plaintext) & 1)
             elif method == 'beforeSboxHwParity':
-                method_judge = (hamWeight[key][tra] % 2 == 0)
+                hamWeight=bin(key ^ plaintext).count('1')
+                method_judge = (hamWeight % 2 == 0)
+            elif method == 'afterSboxHmGe4':
+                hamWeight=bin(sbox_trans(key ^ plaintext)).count('1')
+                method_judge = (hamWeight > 4)
             elif method == 'afterSbox_MSB':
-                method_judge =
+                hamWeight=bin(sbox_trans(key ^ plaintext)).count('1')
+                method_judge = (hamWeight > 4)
             if method_judge:
                 trace1.append(traces[tra])
             else:
