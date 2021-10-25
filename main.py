@@ -58,29 +58,19 @@ def after_sbox_consolidation(plaintexts, trace, intervals, method, N=100):
     return cipher
 
 
-def after_sbox_dpa(plaintexts, trace, N, method):
-    cipher = []
-    for bit in range(16):
-        this_cipher = calpre.corr_cal_dpa(bit, plaintexts, trace, N, method)
-        cipher.append(this_cipher)
-        print("第" + str(bit + 1) + "字节的密钥为" + this_cipher)
-    return cipher
-
-
 if __name__ == '__main__':
     time_start = time.time()
     N = 100  # 100条能量迹（根据提供文件）
     ipc = 980
     intervals = 340  # 整合的时间段中的点数
     plaintexts, trace = datapre.readfile('相关能量分析_原始波_无滤波_%s条_8500点' % N, N)
-    trace_max_extract = datapre.max_traces(trace, ipc)
+    trace_max_extract = datapre.max_traces(trace, ipc, N)
+    calpre.corr_cal_dpa(0, plaintexts, trace, N)
     print("数据成功载入...")
     # cipher_before_sbox = before_sbox_test1(plaintexts, trace, N)
     # cipher_after_sbox = after_sbox_cpa(plaintexts, trace_max_extract, N)
     # cipher_extract = after_sbox_consolidation(plaintexts, trace, intervals, 'pow', N)
-    cipher_dpa = after_sbox_dpa(plaintexts, trace, N, 'afterSboxHwGe4')
-    print(cipher_dpa)
     time_end = time.time()
-    print('总耗时%.2fs' % (time_end - time_start))
+    print(time_end - time_start)
 
     # ['11', '22', '33', '44', '55', '66', '77', '88', '99', 'aa', 'bb', 'cc', 'dd', 'ee', 'ff', '00']
