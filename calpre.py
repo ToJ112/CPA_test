@@ -119,8 +119,6 @@ def corr_cal_extract(k, plaintexts, trace_matrix, ipc, N=100):
 def corr_cal_dpa(k, plaintexts, traces, N, method):
     max_diff = -1
     real_key = -1
-    hamWeight = hamming_weight(k, plaintexts, N)
-    # for key in tqdm(range(256)):
     for key in range(256):
         trace0 = []
         trace1 = []
@@ -131,16 +129,18 @@ def corr_cal_dpa(k, plaintexts, traces, N, method):
                 ciphertext = sbox_trans(key ^ plaintext)
                 method_judge = (ciphertext & 1)
             elif method == 'beforeSboxHwParity':
-                method_judge = (hamWeight[key][tra] % 2 == 0)
-            elif method == 'afterSbox_MSB':
-                method_judge =
+                hamWeight = bin(key ^ plaintext).count('1')
+                method_judge = (hamWeight % 2 == 0)
+            elif method == 'afterSboxHwGe4':
+                hamWeight = bin(sbox_trans(key ^ plaintext)).count('1')
+                method_judge = (hamWeight > 4)
             if method_judge:
                 trace1.append(traces[tra])
             else:
                 trace0.append(traces[tra])
         mean_tra0 = np.einsum("ij->j", np.array(trace0)) / np.double(np.shape(trace0)[0])
         mean_tra1 = np.einsum("ij->j", np.array(trace1)) / np.double(np.shape(trace1)[0])
-        diff_trace = np.max(abs(mean_tra1 - mean_tra0))
+        diff_trace = np.max(mean_tra1 - mean_tra0)
         if max_diff < diff_trace:
             max_diff = diff_trace
             real_key = key
