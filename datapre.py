@@ -26,7 +26,13 @@ def readfile(pathname, N=100):  # pathname为具体文件夹名，n为波形条�
     return pt_list, trace
 
 
-def max_traces(traces, ipc, N=100):
+def max_traces(traces, ipc):
+    '''
+    最大值方法，健壮性差
+    :param traces: 整合前的能量迹矩阵
+    :param ipc: 估计的时钟周期（取出最大值的点数）
+    :return: 返回处理后的能量迹
+    '''
     trace_max_list = np.argsort(traces, axis=1)[:, -ipc:]
     trace_maxs = np.sort(trace_max_list, axis=1)
     return np.vstack([traces[i, tuple(trace_maxs[i])] for i in range(traces.shape[0])])
@@ -35,6 +41,13 @@ def square(l):
     return [i**2 for i in l]
 
 def consolidation(traces, intervals, method):
+    '''
+    整合方法
+    :param traces: 整合前的能量迹矩阵，slices为点数/intervals
+    :param intervals: 需要将多少个点整合为一个点
+    :param method: 选择的整合方法
+    :return:返回整合后的能量迹
+    '''
     slices = int(8500 / intervals)
     # traces_slice = []
     try:

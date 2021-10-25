@@ -116,27 +116,32 @@ def corr_cal_extract(k, plaintexts, trace_matrix, ipc, N=100):
     return '{0:02X}'.format(cipher_key)
 
 
-def corr_cal_dpa(k, plaintexts, traces, N):
-    trace0 = []
-    trace1 = []
-    count0 = 0
-    count1 = 0
+def corr_cal_dpa(k, plaintexts, traces, N, method):
     max_diff = -1
     real_key = -1
+    hamWeight = hamming_weight(k, plaintexts, N)
+    # for key in tqdm(range(256)):
     for key in range(256):
+        trace0 = []
+        trace1 = []
         for tra in range(N):
             plaintext = eval('0x' + plaintexts[tra][k])
-            ciphertext = sbox_trans(key ^ plaintext)
-            if (ciphertext & 1):
-                trace1.append(tra)
+            method_judge = -1
+            if method == 'afterSbox_LSB':
+                ciphertext = sbox_trans(key ^ plaintext)
+                method_judge = (ciphertext & 1)
+            elif method == 'beforeSboxHwParity':
+                method_judge = (hamWeight[key][tra] % 2 == 0)
+            elif method == 'afterSbox_MSB':
+                method_judge =
+            if method_judge:
+                trace1.append(traces[tra])
             else:
-                trace0.append(tra)
-        print(np.shape(trace0),np.shape(trace1))
+                trace0.append(traces[tra])
         mean_tra0 = np.einsum("ij->j", np.array(trace0)) / np.double(np.shape(trace0)[0])
         mean_tra1 = np.einsum("ij->j", np.array(trace1)) / np.double(np.shape(trace1)[0])
-        diff_trace = abs(mean_tra0 - mean_tra1)
-        print(diff_trace)
-        # if max_diff < diff_trace:
-        #     max_diff = diff_trace
-        #     real_key = key
-    return real_key
+        diff_trace = np.max(abs(mean_tra1 - mean_tra0))
+        if max_diff < diff_trace:
+            max_diff = diff_trace
+            real_key = key
+    return '{0:02X}'.format(real_key)
