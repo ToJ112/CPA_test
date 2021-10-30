@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 # author: jtning
 import time
-
 import numpy as np
-
 import datapre
 import calpre
 
